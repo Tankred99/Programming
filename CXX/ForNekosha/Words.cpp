@@ -1,4 +1,5 @@
-// Finished
+// Finished 
+
 #include <iostream>
 #include <cstring>
 #include <cctype>
@@ -44,19 +45,19 @@ int main() {
     setlocale(LC_ALL, "Russian");
     int N;
     do {
-        cout << "Введите количество строк: ";
-        cin >> N;
+        wprintf(L"Введите количество строк: ");
+        wscanf(L"%d", &N);
+        getchar(); // to consume the newline character left-over
     } while (N < 2 || N > 10);
-    cin.ignore();
 
     char* text = (char*)calloc(N * 81, sizeof(char));
-    cout << "Введите 1-ую строку: ";
-    cin.getline(text, 80);
+    wprintf(L"Введите 1-ую строку: ");
+    fgets(text, 80, stdin);
 
     char* buffer = (char*)calloc(81, sizeof(char));
     for (int i = 1; i < N; i++) {
-        cout << "Введите " << i + 1 << "-ую строку: ";
-        cin.getline(buffer, 80);
+        wprintf(L"Введите %d-ую строку: ", i + 1);
+        fgets(buffer, 80, stdin);
         strcat(text, "\n");
         strcat(text, buffer);
     }
@@ -67,12 +68,12 @@ int main() {
     extractSecondWords(text, words, wordCount);
 
     if (wordCount == 0)
-        cout << "Нет предложений" << endl;
+        wprintf(L"Нет предложений\n");
     else {
-        cout << endl << "Последние слова: " << endl;
+        wprintf(L"\nПоследние слова: \n");
         sortWords(words, wordCount);
         for (int i = 0; i < wordCount; i++) {
-            cout << words[i] << endl;
+            wprintf(L"%s\n", words[i]);
             free(words[i]);
         }
         free(words);
