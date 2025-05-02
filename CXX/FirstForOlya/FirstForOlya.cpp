@@ -1,3 +1,4 @@
+++
 #include <iostream>
 #include <algorithm> // For std::sort function
 using namespace std;
@@ -6,15 +7,15 @@ template<typename T>
 class IntArray {
     T* data;  // Pointer to the array data
     int size;   // Size of the array
-    int startIndex; // Starting index for the array (0 or 1)
+    int baseIndex; // Base index for the array (can be negative)
 public:
-    // Constructor that initializes the array with a given size and starting index
-    IntArray(int n, int start = 0) : size(n), startIndex(start) {
+    // Constructor that initializes the array with a given size and base index
+    IntArray(int n, int base = 0) : size(n), baseIndex(base) {
         data = new T[size];
     }
 
     // Copy constructor
-    IntArray(const IntArray& other) : size(other.size), startIndex(other.startIndex) {
+    IntArray(const IntArray& other) : size(other.size), baseIndex(other.baseIndex) {
         data = new T[size];
         copy(other.data, other.data + size, data);
     }
@@ -24,7 +25,7 @@ public:
         if (this != &other) {
             delete[] data;
             size = other.size;
-            startIndex = other.startIndex;
+            baseIndex = other.baseIndex;
             data = new T[size];
             copy(other.data, other.data + size, data);
         }
@@ -36,12 +37,12 @@ public:
         delete[] data;
     }
 
-    // Overloading of index operator with bounds checking and support for 0-based and 1-based indexing
+    // Overloading of index operator with bounds checking and support for negative base indices
     T& operator[](int index) {
-        if (index < startIndex || index >= size + startIndex) {
+        if (index < baseIndex || index >= size + baseIndex) {
             throw out_of_range("Index out of range");
         }
-        return data[index - startIndex];
+        return data[index - baseIndex];
     }
 
     // Method to sort the array using std::sort function
@@ -52,44 +53,44 @@ public:
     // Method to find a value in the array and return its index or -1 if not found
     int find(const T& value) {
         for (int i = 0; i < size; ++i) {
-            if (data[i] == value) return i + startIndex;
+            if (data[i] == value) return i + baseIndex;
         }
         return -1;
     }
 
     // Overloading of addition operator to add two arrays element-wise
     IntArray operator+(const IntArray& other) {
-        if (size != other.size || startIndex != other.startIndex) throw invalid_argument("Arrays must be the same size and have the same starting index");
-        IntArray result(size, startIndex);
+        if (size != other.size || baseIndex != other.baseIndex) throw invalid_argument("Arrays must be the same size and have the same base index");
+        IntArray result(size, baseIndex);
         for (int i = 0; i < size; ++i) {
-            result[i + startIndex] = data[i] + other.data[i];
+            result.data[i] = data[i] + other.data[i];
         }
         return result;
     }
 
     // Overloading of subtraction operator to subtract two arrays element-wise
     IntArray operator-(const IntArray& other) {
-        if (size != other.size || startIndex != other.startIndex) throw invalid_argument("Arrays must be the same size and have the same starting index");
-        IntArray result(size, startIndex);
+        if (size != other.size || baseIndex != other.baseIndex) throw invalid_argument("Arrays must be the same size and have the same base index");
+        IntArray result(size, baseIndex);
         for (int i = 0; i < size; ++i) {
-            result[i + startIndex] = data[i] - other.data[i];
+            result.data[i] = data[i] - other.data[i];
         }
         return result;
     }
 };
 
 int main() {
-    // Create IntArray objects of size 5 with starting index 1
-    IntArray<int> arr1(5, 1), arr2(5, 1);
+    // Create IntArray objects of size 5 with base index 1
+    IntArray<int> arr1(5, -1), arr2(5, -1);
 
-    // Initialize arr1 with values from 0 to 4
+    // Initialize arr1 with values from 1 to 5
     for (int i = 1; i <= 5; ++i) {
-        arr1[i] = i - 1;
+        arr1[i] = i;
     }
 
-    // Initialize arr2 with values from 5 to 9
+    // Initialize arr2 with values from 6 to 10
     for (int i = 1; i <= 5; ++i) {
-        arr2[i] = i + 4;
+        arr2[i] = i + 5;
     }
 
     // Add arr1 and arr2 and print the result
@@ -103,7 +104,7 @@ int main() {
     // Subtract arr2 from arr1 and print the result
     IntArray<int> diff = arr1 - arr2;
     cout << "Difference: ";
-    for (int i = 1; i <= 5; ++i) {
+    for (int i = -1; i <= 5; ++i) {
         cout << diff[i] << ' ';
     }
     cout << endl;
@@ -111,7 +112,7 @@ int main() {
     // Sort arr1 and print the result
     arr1.sort();
     cout << "Sorted arr1: ";
-    for (int i = 1; i <= 5; ++i) {
+    for (int i = -1; i <= 5; ++i) {
         cout << arr1[i] << ' ';
     }
     cout << endl;
