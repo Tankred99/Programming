@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+// Finished
 #include <iostream>
 #include <cstring>
 #include <cctype>
