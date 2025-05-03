@@ -1,6 +1,6 @@
-++
 #include <iostream>
 #include <algorithm> // For std::sort function
+#include <optional>  // For std::optional
 using namespace std;
 
 template<typename T>
@@ -45,22 +45,29 @@ public:
         return data[index - baseIndex];
     }
 
+    // Method to get the base index of the array
+    int getBaseIndex() const {
+        return baseIndex;
+    }
+
     // Method to sort the array using std::sort function
     void sort() {
         std::sort(data, data + size);
     }
 
-    // Method to find a value in the array and return its index or -1 if not found
-    int find(const T& value) {
+    // Method to find a value in the array and return an optional index
+    optional<int> find(const T& value) {
         for (int i = 0; i < size; ++i) {
             if (data[i] == value) return i + baseIndex;
         }
-        return -1;
+        return nullopt; // Return nullopt if value is not found
     }
 
     // Overloading of addition operator to add two arrays element-wise
     IntArray operator+(const IntArray& other) {
-        if (size != other.size || baseIndex != other.baseIndex) throw invalid_argument("Arrays must be the same size and have the same base index");
+        if (size != other.size || baseIndex != other.baseIndex) {
+            throw invalid_argument("Arrays must be the same size and have the same base index");
+        }
         IntArray result(size, baseIndex);
         for (int i = 0; i < size; ++i) {
             result.data[i] = data[i] + other.data[i];
@@ -70,7 +77,9 @@ public:
 
     // Overloading of subtraction operator to subtract two arrays element-wise
     IntArray operator-(const IntArray& other) {
-        if (size != other.size || baseIndex != other.baseIndex) throw invalid_argument("Arrays must be the same size and have the same base index");
+        if (size != other.size || baseIndex != other.baseIndex) {
+            throw invalid_argument("Arrays must be the same size and have the same base index");
+        }
         IntArray result(size, baseIndex);
         for (int i = 0; i < size; ++i) {
             result.data[i] = data[i] - other.data[i];
@@ -80,50 +89,60 @@ public:
 };
 
 int main() {
-    // Create IntArray objects of size 5 with base index 1
-    IntArray<int> arr1(5, -1), arr2(5, -1);
+    // Declare IntArray objects outside the try block
+    IntArray<int> arr1(5, 3);
+    IntArray<int> arr2(5, 3);
 
-    // Initialize arr1 with values from 1 to 5
-    for (int i = 1; i <= 5; ++i) {
-        arr1[i] = i;
+    try {
+        // Initialize arr1 with values 44, 45, 46, 47, 48
+        int values1[] = {44, 45, 46, 47, 48};
+        for (int i = arr1.getBaseIndex(), j = 0; i < arr1.getBaseIndex() + 5; ++i, ++j) {
+            arr1[i] = values1[j];
+        }
+
+        // Initialize arr2 with values 1, 2, 3, 4, 5
+        int values2[] = {1, 2, 3, 4, 5};
+        for (int i = arr2.getBaseIndex(), j = 0; i < arr2.getBaseIndex() + 5; ++i, ++j) {
+            arr2[i] = values2[j];
+        }
+        cout << "Array contents (arr1): ";
+        for (int i = arr1.getBaseIndex(); i < arr1.getBaseIndex() + 5; ++i) {
+            cout << arr1[i] << ' ';
+        }
+        cout << endl;
+        
+        cout << "Array contents (arr2): ";
+        for (int i = arr2.getBaseIndex(); i < arr2.getBaseIndex() + 5; ++i) {
+            cout << arr2[i] << ' ';
+        }
+        cout << endl;
+        
+        
+        // Subtract arr2 from arr1 and print the result
+        IntArray<int> diff = arr1 - arr2;
+        cout << "Difference: ";
+        for (int i = diff.getBaseIndex(); i < diff.getBaseIndex() + 5; ++i) {
+            cout << diff[i] << ' ';
+        }
+        cout << endl;
+
+        // Find the index of value 46 in arr1 and print the result
+        optional<int> index = arr1.find(46);
+        if (index) {
+            cout << "Value 46 found at index: " << *index << endl;
+        } else {
+            cout << "Value 46 not found" << endl;
+        }
+
+    } catch (const out_of_range& e) {
+        cout << "Error: " << e.what() << endl;
+    } catch (const invalid_argument& e) {
+        cout << "Error: " << e.what() << endl;
     }
 
-    // Initialize arr2 with values from 6 to 10
-    for (int i = 1; i <= 5; ++i) {
-        arr2[i] = i + 5;
-    }
-
-    // Add arr1 and arr2 and print the result
-    IntArray<int> sum = arr1 + arr2;
-    cout << "Sum: ";
-    for (int i = 1; i <= 5; ++i) {
-        cout << sum[i] << ' ';
-    }
-    cout << endl;
-
-    // Subtract arr2 from arr1 and print the result
-    IntArray<int> diff = arr1 - arr2;
-    cout << "Difference: ";
-    for (int i = -1; i <= 5; ++i) {
-        cout << diff[i] << ' ';
-    }
-    cout << endl;
-
-    // Sort arr1 and print the result
-    arr1.sort();
-    cout << "Sorted arr1: ";
-    for (int i = -1; i <= 5; ++i) {
-        cout << arr1[i] << ' ';
-    }
-    cout << endl;
-
-    // Find the index of value 3 in arr1 and print the result
-    int index = arr1.find(3);
-    if (index != -1) {
-        cout << "Value 3 found at index: " << index << endl;
-    } else {
-        cout << "Value 3 not found" << endl;
-    }
+    // Output the base indices of both arrays at the end
+    cout << "Base index of arr1: " << arr1.getBaseIndex() << endl;
+    cout << "Base index of arr2: " << arr2.getBaseIndex() << endl;
 
     return 0;
 }
