@@ -11,7 +11,7 @@ SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 # Executable
-TARGET = main
+TARGET = main.exe
 
 # Default rule
 all: $(TARGET)
@@ -26,6 +26,6 @@ $(TARGET): $(OBJS)
 
 # Cleaning the build files
 clean:
-	rm -f $(OBJS) $(TARGET)
+	del /Q $(OBJS) $(TARGET)
 
 .PHONY: all clean
