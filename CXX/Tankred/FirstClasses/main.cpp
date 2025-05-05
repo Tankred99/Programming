@@ -40,6 +40,13 @@ int main() {
     int diff = date3 - date1;
     wprintf(L"Количество дней между датами 3 и 1: %d\n", diff);
     
+    // Демонстрация отсчета от 1.1.1900
+    Date baseDate(1, 1, 1900);
+    int daysFromBase1 = date1 - baseDate;
+    int daysFromBase3 = date3 - baseDate;
+    wprintf(L"Дней от 01.01.1900 до даты 1: %d\n", daysFromBase1);
+    wprintf(L"Дней от 01.01.1900 до даты 3: %d\n", daysFromBase3);
+    
     // Проверка операторов сравнения
     wprintf(L"Дата 1 < Дата 2: %ls\n", (date1 < date2 ? L"Да" : L"Нет"));
     wprintf(L"Дата 2 > Дата 3: %ls\n", (date2 > date3 ? L"Да" : L"Нет"));

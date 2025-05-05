@@ -113,18 +113,40 @@ Date& Date::addDays(int days) {
 long long Date::totalDays() const {
     long long totalDays = 0;
     
-    // Добавляем дни за предыдущие годы
-    for (int y = 0; y < year; y++) {
-        totalDays += isLeapYear(y) ? 366 : 365;
-    }
+    // Начало отсчета: 1 января 1900 года
+    int baseYear = 1900;
     
-    // Добавляем дни за предыдущие месяцы текущего года
-    for (int m = 1; m < month; m++) {
-        totalDays += getDaysInMonth(m, year);
+    // Если год до базового года, вычитаем дни
+    if (year < baseYear) {
+        // Добавляем дни за каждый год от текущего до базового (не включая)
+        for (int y = year; y < baseYear; y++) {
+            totalDays -= isLeapYear(y) ? 366 : 365;
+        }
+        
+        // Вычитаем дни оставшиеся до конца года
+        for (int m = month + 1; m <= 12; m++) {
+            totalDays -= getDaysInMonth(m, year);
+        }
+        
+        // Вычитаем дни оставшиеся до конца месяца
+        totalDays -= getDaysInMonth(month, year) - day;
+    } else {
+        // Добавляем дни за предыдущие годы (начиная с 1900)
+        for (int y = baseYear; y < year; y++) {
+            totalDays += isLeapYear(y) ? 366 : 365;
+        }
+        
+        // Добавляем дни за предыдущие месяцы текущего года
+        for (int m = 1; m < month; m++) {
+            totalDays += getDaysInMonth(m, year);
+        }
+        
+        // Добавляем дни текущего месяца
+        totalDays += day;
+        
+        // Вычитаем 1, так как 1 января 1900 считается как 0-й день
+        totalDays -= 1;
     }
-    
-    // Добавляем дни текущего месяца
-    totalDays += day;
     
     return totalDays;
 }

@@ -5,8 +5,8 @@ using namespace std;
 
 int main() {
     // Declare IntArray objects outside the try block
-    IntArray<int> arr1(5, 3);
-    IntArray<int> arr2(5, 3);
+    IntArray<int> arr1(5, 50);
+    IntArray<int> arr2(5, 50);
 
     try {
         // Initialize arr1 with values 44, 45, 46, 47, 48
