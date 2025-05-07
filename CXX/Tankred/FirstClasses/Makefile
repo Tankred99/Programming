@@ -1,24 +1,22 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++11 -D_UNICODE -DUNICODE
-TARGET = date_program
-OBJS = Date.o main.o
+CXXFLAGS = -std=c++11 -Wall -Wextra
+TARGET = date_tester
+SRCS = main.cpp Date.cpp
+HEADERS = Date.h CSVParser.h DateTester.h
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
-
-Date.o: Date.cpp Date.h
-	$(CXX) $(CXXFLAGS) -c Date.cpp
-
-main.o: main.cpp Date.h
-	$(CXX) $(CXXFLAGS) -c main.cpp
+$(TARGET): $(SRCS) $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
 
 clean:
-ifeq ($(OS),Windows_NT)
-	del $(OBJS) $(TARGET).exe
-else
-	rm -f $(OBJS) $(TARGET)
-endif
+	rm -f $(TARGET)
 
-.PHONY: all clean
+run: $(TARGET)
+	./$(TARGET)
+
+run_auto: $(TARGET)
+	./$(TARGET) date_tests.csv auto
+
+run_manual: $(TARGET)
+	./$(TARGET) date_tests.csv manual

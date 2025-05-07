@@ -7,5 +7,7 @@ public class testJava {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(200, 100);
         frame.setVisible(true);
+        
+        
     }
 }
