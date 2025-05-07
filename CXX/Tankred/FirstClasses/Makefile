@@ -4,13 +4,21 @@ TARGET = date_tester
 SRCS = main.cpp Date.cpp
 HEADERS = Date.h CSVParser.h DateTester.h
 
+# Detect OS for platform-specific commands
+ifeq ($(OS),Windows_NT)
+    RM = del /Q
+    TARGET := $(TARGET).exe
+else
+    RM = rm -f
+endif
+
 all: $(TARGET)
 
 $(TARGET): $(SRCS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	$(RM) $(TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
