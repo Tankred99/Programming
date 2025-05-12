@@ -1,4 +1,4 @@
 *.exe
 *.zip
 *.o
-tokens/*
+.env
