@@ -23,6 +23,14 @@ int Date::getDaysInMonth(int m, int y) const {
     return daysInMonth[m - 1];
 }
 
+bool Date::isValidDate() const {
+    // Проверка, что дата не меньше минимальной (1 января 1900 года)
+    if (year < MIN_YEAR) return false;
+    if (year == MIN_YEAR && month < MIN_MONTH) return false;
+    if (year == MIN_YEAR && month == MIN_MONTH && day < MIN_DAY) return false;
+    return true;
+}
+
 void Date::normalize() {
     // Если день больше максимального для текущего месяца
     while (day > getDaysInMonth(month, year)) {
@@ -33,7 +41,7 @@ void Date::normalize() {
             year++;
         }
     }
-    
+
     // Если день меньше минимального (отрицательный)
     while (day <= 0) {
         month--;
@@ -43,7 +51,7 @@ void Date::normalize() {
         }
         day += getDaysInMonth(month, year);
     }
-    
+
     // Обработка переполнения месяцев
     while (month > 12) {
         month -= 12;
@@ -52,6 +60,14 @@ void Date::normalize() {
     while (month < 1) {
         month += 12;
         year--;
+    }
+
+    // Проверяем, что дата не меньше минимальной
+    if (!isValidDate()) {
+        // Если дата меньше минимальной, устанавливаем минимальную дату
+        day = MIN_DAY;
+        month = MIN_MONTH;
+        year = MIN_YEAR;
     }
 }
 
@@ -66,14 +82,14 @@ Date::Date(const std::string& dateStr, const std::string& format) {
     day = 1;
     month = 1;
     year = 2000;
-    
+
     try {
         // Парсим строку в зависимости от формата
         if (format == "DD.MM.YYYY" && dateStr.length() >= 10) {
             day = std::stoi(dateStr.substr(0, 2));
             month = std::stoi(dateStr.substr(3, 2));
             year = std::stoi(dateStr.substr(6, 4));
-        } 
+        }
         else if (format == "MM/DD/YYYY" && dateStr.length() >= 10) {
             month = std::stoi(dateStr.substr(0, 2));
             day = std::stoi(dateStr.substr(3, 2));
@@ -91,35 +107,35 @@ Date::Date(const std::string& dateStr, const std::string& format) {
     catch (const std::exception& e) {
         throw std::invalid_argument("Error parsing date string: " + std::string(e.what()));
     }
-    
+
     normalize();
 }
 
 std::string Date::toString(const std::string& format) const {
     std::stringstream ss;
-    
+
     if (format == "DD.MM.YYYY") {
-        ss << std::setfill('0') << std::setw(2) << day << "." 
-           << std::setfill('0') << std::setw(2) << month << "." 
+        ss << std::setfill('0') << std::setw(2) << day << "."
+           << std::setfill('0') << std::setw(2) << month << "."
            << std::setfill('0') << std::setw(4) << year;
-    } 
+    }
     else if (format == "MM/DD/YYYY") {
-        ss << std::setfill('0') << std::setw(2) << month << "/" 
-           << std::setfill('0') << std::setw(2) << day << "/" 
+        ss << std::setfill('0') << std::setw(2) << month << "/"
+           << std::setfill('0') << std::setw(2) << day << "/"
            << std::setfill('0') << std::setw(4) << year;
     }
     else if (format == "YYYY-MM-DD") {
-        ss << std::setfill('0') << std::setw(4) << year << "-" 
-           << std::setfill('0') << std::setw(2) << month << "-" 
+        ss << std::setfill('0') << std::setw(4) << year << "-"
+           << std::setfill('0') << std::setw(2) << month << "-"
            << std::setfill('0') << std::setw(2) << day;
     }
     else {
         // По умолчанию используем формат DD.MM.YYYY если передан некорректный формат
-        ss << std::setfill('0') << std::setw(2) << day << "." 
-           << std::setfill('0') << std::setw(2) << month << "." 
+        ss << std::setfill('0') << std::setw(2) << day << "."
+           << std::setfill('0') << std::setw(2) << month << "."
            << std::setfill('0') << std::setw(4) << year;
     }
-    
+
     return ss.str();
 }
 
@@ -132,29 +148,29 @@ Date& Date::addDays(int days) {
 long long Date::totalDays() const {
     // Используем алгоритм Джулианского дня для более точного вычисления
     // https://en.wikipedia.org/wiki/Julian_day
-    
+
     int y = year;
     int m = month;
     int d = day;
-    
+
     // Январь и февраль считаются как 13-й и 14-й месяцы предыдущего года
     if (m <= 2) {
         m += 12;
         y -= 1;
     }
-    
+
     // Расчет Джулианского дня
-    long long jd = static_cast<long long>(365.25 * (y + 4716)) + 
-                  static_cast<long long>(30.6001 * (m + 1)) + 
+    long long jd = static_cast<long long>(365.25 * (y + 4716)) +
+                  static_cast<long long>(30.6001 * (m + 1)) +
                   d - 1524;
-    
+
     // Коррекция для Григорианского календаря
     if (y > 1582 || (y == 1582 && m > 10) || (y == 1582 && m == 10 && d >= 15)) {
         int a = y / 100;
         int b = 2 - a + (a / 4);
         jd += b;
     }
-    
+
     // Вычитаем базовую дату (1.1.1900)
     // Джулианский день для 1.1.1900: 2415021
     return jd - 2415021;
@@ -193,7 +209,7 @@ bool Date::operator>=(const Date& other) const {
 std::wstring Date::toWString(const std::string& format) const {
     // Сначала получаем строку в обычном формате
     std::string str = toString(format);
-    
+
     // Конвертируем её в широкую строку
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(str);
