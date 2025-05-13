@@ -15,7 +15,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class App extends TelegramLongPollingBot {
 
     private static String BOT_TOKEN;
-    private static final String BOT_USERNAME = "YOUR_BOT_USERNAME"; // Замените на имя пользователя вашего бота
+    private static final String BOT_USERNAME = "AI Zed Bot"; // Замените на имя пользователя вашего бота
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
 
     public static void main(String[] args) {
