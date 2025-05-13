@@ -1,6 +1,10 @@
 package com.example;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,8 +19,10 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class App extends TelegramLongPollingBot {
 
     private static String BOT_TOKEN;
-    private static final String BOT_USERNAME = "AI Zed Bot"; // Замените на имя пользователя вашего бота
+    private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
+    private static final String LM_STUDIO_API_URL =
+        "http://localhost:1234/v1/chat/completions"; // Замените на URL вашего LM Studio API
 
     public static void main(String[] args) {
         try {
@@ -31,11 +37,10 @@ public class App extends TelegramLongPollingBot {
             System.err.println(
                 "Ошибка при чтении токена из файла: " + e.getMessage()
             );
-            System.exit(1); // Завершаем программу с кодом ошибки
+            System.exit(1);
         }
     }
 
-    // Метод для чтения токена из файла
     private static String readTokenFromFile(String filePath)
         throws IOException {
         Path path = Paths.get(filePath);
@@ -45,7 +50,7 @@ public class App extends TelegramLongPollingBot {
             throw new IOException("Файл tokens.txt пуст.");
         }
 
-        return lines.get(0).trim(); // Берем первую строку как токен и удаляем лишние пробелы
+        return lines.get(0).trim();
     }
 
     @Override
@@ -64,15 +69,50 @@ public class App extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
+            // Отправляем запрос к LM Studio
+            String responseText = sendToLMStudio(messageText);
+
             SendMessage message = new SendMessage();
             message.setChatId(String.valueOf(chatId));
-            message.setText("Вы сказали: " + messageText);
+            message.setText(responseText);
 
             try {
                 execute(message);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private String sendToLMStudio(String prompt) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            String requestBody = String.format(
+                "{\"prompt\": \"%s\", \"max_tokens\": 200000}",
+                prompt
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(LM_STUDIO_API_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+            HttpResponse<String> response = client.send(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+            );
+
+            if (response.statusCode() == 200) {
+                return response.body();
+            } else {
+                return (
+                    "Ошибка при запросе к LM Studio: " + response.statusCode()
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Ошибка при запросе к LM Studio: " + e.getMessage();
         }
     }
 }
