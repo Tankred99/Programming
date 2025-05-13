@@ -8,7 +8,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,7 +24,13 @@ public class App extends TelegramLongPollingBot {
     private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
     private static final String LM_STUDIO_API_URL =
-        "http://localhost:1234/v1/chat/completions"; // Замените на URL вашего LM Studio API
+        "http://localhost:1234/v1/chat/completions";
+
+    private Map<Long, String> userModels; // Хранит выбранную модель для каждого пользователя
+
+    public App() {
+        userModels = new HashMap<>();
+    }
 
     public static void main(String[] args) {
         try {
@@ -69,27 +77,75 @@ public class App extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            // Отправляем запрос к LM Studio
-            String responseText = sendToLMStudio(messageText);
+            if (messageText.startsWith("/model")) {
+                handleModelSelection(chatId, messageText);
+            } else {
+                String selectedModel = userModels.getOrDefault(
+                    chatId,
+                    "mathstral"
+                );
+                String responseText = sendToLMStudio(
+                    messageText,
+                    selectedModel
+                );
 
-            SendMessage message = new SendMessage();
-            message.setChatId(String.valueOf(chatId));
-            message.setText(responseText);
+                SendMessage message = new SendMessage();
+                message.setChatId(String.valueOf(chatId));
+                message.setText(responseText);
 
-            try {
-                execute(message);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    private String sendToLMStudio(String prompt) {
+    private void handleModelSelection(long chatId, String messageText) {
+        String[] parts = messageText.split(" ");
+        if (parts.length == 2) {
+            String model = parts[1];
+            if (model.equals("mathstral") || model.equals("codestral")) {
+                userModels.put(chatId, model);
+                SendMessage message = new SendMessage();
+                message.setChatId(String.valueOf(chatId));
+                message.setText("Вы выбрали модель: " + model);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                sendModelSelectionHelp(chatId);
+            }
+        } else {
+            sendModelSelectionHelp(chatId);
+        }
+    }
+
+    private void sendModelSelectionHelp(long chatId) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(
+            "Пожалуйста, выберите модель, используя команду /model mathstral или /model codestral."
+        );
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String sendToLMStudio(String prompt, String model) {
         try {
             HttpClient client = HttpClient.newHttpClient();
             String requestBody = String.format(
-                "{\"prompt\": \"%s\", \"max_tokens\": 200000}",
-                prompt
+                "{\"prompt\": \"%s\", \"model\": \"%s\", \"max_tokens\": 150}",
+                prompt,
+                model
             );
 
             HttpRequest request = HttpRequest.newBuilder()
