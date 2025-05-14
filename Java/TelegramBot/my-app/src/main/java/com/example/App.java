@@ -26,7 +26,7 @@ public class App extends TelegramLongPollingBot {
     private static String BOT_TOKEN;
     private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
-    private static final String LM_STUDIO_API_URL = "http://localhost:1234/v1/chat/completions";
+    private static final String LM_STUDIO_API_URL = "http://127.0.0.1:8080/v1/chat/completions";
     private static final int TIMEOUT_SECONDS = 30;
 
     private Map<Long, String> userModels; // Stores the selected model for each user
