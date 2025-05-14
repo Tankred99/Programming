@@ -1,31 +1,34 @@
-# Compiler
 CXX = g++
-
-# Compiler flags
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
-
-# Source files
-SRCS = main.cpp
-
-# Object files
+TARGET = main
+SRCS = main.cpp IntArray.cpp
 OBJS = $(SRCS:.cpp=.o)
+HEADERS = IntArray.h
 
-# Executable
-TARGET = main.exe
+# Detect OS for platform-specific commands
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Linux)
+    RM = rm -f
+else ifeq ($(UNAME),Darwin)
+    RM = rm -f
+else ifeq ($(OS),Windows_NT)
+    RM = del /Q
+    TARGET := $(TARGET).exe
+else
+    $(error "Unsupported operating system: $(UNAME)")
+endif
 
-# Default rule
+
 all: $(TARGET)
 
-# Linking the executable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+$(TARGET): $(OBJS) $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
 
-# Compiling source files
-%.o: %.cpp IntArray.h
-	$(CXX) $(CXXFLAGS) -c $<
+%.o: %.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Cleaning the build files
 clean:
-	del /Q $(OBJS) $(TARGET)
+	$(RM) $(OBJS) $(TARGET)
 
-.PHONY: all clean
+run: $(TARGET)
+	./$(TARGET)

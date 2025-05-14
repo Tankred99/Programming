@@ -1,7 +1,12 @@
 #include "IntArray.h"
 #include <stdexcept>
+#include <algorithm> //for std::copy
+#include <cstring> //for memcpy
+
+
 template<typename T>
 IntArray<T>::IntArray(int n, int base) : size(n), baseIndex(base) {
+    if (n < 0) throw std::invalid_argument("Size cannot be negative");
     data = new T[size];
 }
 
@@ -47,7 +52,7 @@ void IntArray<T>::sort() {
 }
 
 template<typename T>
-std::optional<int> IntArray<T>::find(const T& value) {
+std::optional<int> IntArray<T>::find(const T& value) const {
     for (int i = 0; i < size; ++i) {
         if (data[i] == value) return i + baseIndex;
     }
@@ -55,11 +60,11 @@ std::optional<int> IntArray<T>::find(const T& value) {
 }
 
 template<typename T>
-IntArray<T> IntArray<T>::operator+(const IntArray& other) {
-    if (size != other.size || baseIndex != other.baseIndex) {
-        throw std::invalid_argument("Arrays must be the same size and have the same base index");
+IntArray<T> IntArray<T>::operator+(const IntArray& other) const {
+    if (size != other.size) {
+        throw std::invalid_argument("Arrays must have the same size");
     }
-    IntArray result(size, baseIndex);
+    IntArray result(size, 0);
     for (int i = 0; i < size; ++i) {
         result.data[i] = data[i] + other.data[i];
     }
@@ -67,13 +72,17 @@ IntArray<T> IntArray<T>::operator+(const IntArray& other) {
 }
 
 template<typename T>
-IntArray<T> IntArray<T>::operator-(const IntArray& other) {
-    if (size != other.size || baseIndex != other.baseIndex) {
-        throw std::invalid_argument("Arrays must be the same size and have the same base index");
+IntArray<T> IntArray<T>::operator-(const IntArray& other) const {
+    if (size != other.size) {
+        throw std::invalid_argument("Arrays must have the same size");
     }
-    IntArray result(size, baseIndex);
+    IntArray result(size, 0);
     for (int i = 0; i < size; ++i) {
         result.data[i] = data[i] - other.data[i];
     }
     return result;
 }
+
+// Explicit instantiation for int
+template class IntArray<int>;
+template std::ostream& operator<<(std::ostream&, const IntArray<int>&);

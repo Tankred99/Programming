@@ -3,6 +3,9 @@
 
 #include <algorithm> // For std::sort function
 #include <optional>  // For std::optional
+#include <iostream> //For stream operators
+#include <stdexcept> //For exception handling
+
 
 template<typename T>
 class IntArray {
@@ -32,15 +35,35 @@ public:
     void sort();
 
     // Method to find a value in the array and return an optional index
-    std::optional<int> find(const T& value);
+    std::optional<int> find(const T& value) const;
 
     // Overloading of addition operator to add two arrays element-wise
-    IntArray operator+(const IntArray& other);
+    IntArray operator+(const IntArray& other) const;
 
     // Overloading of subtraction operator to subtract two arrays element-wise
-    IntArray operator-(const IntArray& other);
+    IntArray operator-(const IntArray& other) const;
+
+    int getSize() const { return size; }
+
+    // Add a public method to access elements safely
+    const T* getData() const { return data; }
 };
 
-#include "IntArray.cpp"
+// Overload the output stream operator <<
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const IntArray<T>& arr) {
+    os << "[" << arr.getBaseIndex() << "]: ";
+    for (int i = 0; i < arr.getSize(); ++i) {
+        os << arr.getData()[i] << (i < arr.getSize() - 1 ? ", " : "");
+    }
+    return os;
+}
+
+// Overload the input stream operator >> (this requires more design consideration, possibly by expecting a specific format)
+template <typename T>
+std::istream& operator>>(std::istream& is, IntArray<T>& arr) {
+    throw std::runtime_error("Input stream operator not yet implemented.");
+}
+
 
 #endif // INTARRAY_H
