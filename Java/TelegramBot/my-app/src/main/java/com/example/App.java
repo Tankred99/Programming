@@ -27,7 +27,7 @@ public class App extends TelegramLongPollingBot {
     private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
     private static final String LM_STUDIO_API_URL = "http://127.0.0.1:8080/v1/chat/completions";
-    private static final int TIMEOUT_SECONDS = 30;
+    private static final int TIMEOUT_SECONDS = 30*60; // half hour
 
     private Map<Long, String> userModels; // Stores the selected model for each user
 
@@ -122,8 +122,14 @@ public class App extends TelegramLongPollingBot {
         String[] parts = messageText.split(" ");
         if (parts.length == 2) {
             String model = parts[1];
-            if (model.equals("codestral-22b-v0.1") || model.equals("mathstral-7b-v0.1")) {
-                userModels.put(chatId, model);
+            if (model.equals("codestral") || model.equals("mathstral")) {
+                String fullModel = "";
+                if (model.equals("codestral")){
+                    fullModel = "codestral-22b-v0.1";
+                }else if (model.equals("mathstral")){
+                    fullModel = "mathstral-7b-v0.1";
+                }
+                userModels.put(chatId, fullModel);
                 SendMessage message = new SendMessage();
                 message.setChatId(String.valueOf(chatId));
                 message.setText("You selected model: " + model);
@@ -146,7 +152,7 @@ public class App extends TelegramLongPollingBot {
     private void sendModelSelectionHelp(long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
-        message.setText("Please select a model using the command /model codestral-22b-v0.1 or /model mathstral-7b-v0.1.");
+        message.setText("Please select a model using the command /model codestral or /model mathstral");
 
         try {
             execute(message);
@@ -170,15 +176,8 @@ public class App extends TelegramLongPollingBot {
 
             JSONObject requestJson = new JSONObject();
             requestJson.put("model", model);
-            requestJson.put("max_tokens", 40000);
-            requestJson.put("stream", false);
 
             JSONArray messagesArray = new JSONArray();
-
-            JSONObject systemMessage = new JSONObject();
-            systemMessage.put("role", "system");
-            systemMessage.put("content", "You are a helpful assistant.");
-            messagesArray.put(systemMessage);
 
             JSONObject userMessage = new JSONObject();
             userMessage.put("role", "user");
