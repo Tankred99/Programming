@@ -1,14 +1,12 @@
 package com.example;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.File; // Import the File class
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,15 +19,16 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+
 public class App extends TelegramLongPollingBot {
 
     private static String BOT_TOKEN;
     private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
     private static final String LM_STUDIO_API_URL = "http://127.0.0.1:8080/v1/chat/completions";
-    private static final int TIMEOUT_SECONDS = 30*60; // half hour
 
-    private Map<Long, String> userModels; // Stores the selected model for each user
+
+    private final Map<Long, String> userModels; // Stores the selected model for each user
 
     public App() {
         userModels = new HashMap<>();
@@ -122,13 +121,9 @@ public class App extends TelegramLongPollingBot {
         String[] parts = messageText.split(" ");
         if (parts.length == 2) {
             String model = parts[1];
-            if (model.equals("codestral") || model.equals("mathstral")) {
-                String fullModel = "";
-                if (model.equals("codestral")){
-                    fullModel = "codestral-22b-v0.1";
-                }else if (model.equals("mathstral")){
-                    fullModel = "mathstral-7b-v0.1";
-                }
+            String fullModel = getFullModelName(model);
+
+            if (fullModel != null) {
                 userModels.put(chatId, fullModel);
                 SendMessage message = new SendMessage();
                 message.setChatId(String.valueOf(chatId));
@@ -149,6 +144,17 @@ public class App extends TelegramLongPollingBot {
         }
     }
 
+    private String getFullModelName(String modelAlias) {
+        switch (modelAlias) {
+            case "codestral":
+                return "codestral-22b-v0.1";
+            case "mathstral":
+                return "mathstral-7b-v0.1";
+            default:
+                return null;
+        }
+    }
+
     private void sendModelSelectionHelp(long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -165,73 +171,86 @@ public class App extends TelegramLongPollingBot {
 
     private String sendToLMStudio(String messageText, String model) {
         printLogHeader("LM STUDIO REQUEST", "Starting request to LM Studio API");
-
+    
         try {
-            HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-
-            printLog("HTTP CLIENT", "Status: Created", "Timeout: " + TIMEOUT_SECONDS + "s");
-
             JSONObject requestJson = new JSONObject();
             requestJson.put("model", model);
-
+    
             JSONArray messagesArray = new JSONArray();
-
+    
             JSONObject userMessage = new JSONObject();
             userMessage.put("role", "user");
             userMessage.put("content", messageText);
             messagesArray.put(userMessage);
-
+    
             requestJson.put("messages", messagesArray);
-
+    
             String requestBody = requestJson.toString();
             printLog("REQUEST BODY", "Length: " + requestBody.length() + " chars", "Content: " +
-                (requestBody.length() > 100 ? requestBody.substring(0, 100) + "..." : requestBody));
-
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(LM_STUDIO_API_URL))
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-            printLog("REQUEST DETAILS", "Method: " + request.method(), "Headers: " + request.headers().map().toString());
-
-            printLog("REQUEST SENDING", "Status: In Progress", "Waiting for response...");
-
-            try {
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                int statusCode = response.statusCode();
-
-                String responseBody = response.body();
+                   (requestBody.length() > 100 ? requestBody.substring(0, 100) + "..." : requestBody));
+    
+            // 1. Create a temporary file to store the JSON payload
+            Path tempFile = Files.createTempFile("request", ".json");
+            Files.write(tempFile, requestBody.getBytes("UTF-8"));  // Ensure UTF-8 encoding
+            String tempFilePath = tempFile.toAbsolutePath().toString();
+    
+            // 2. Construct the curl command using the temporary file
+            String command = String.format("curl -X POST -H \"Content-Type: application/json\" -H \"Accept: application/json\" --data \"@\\\"%s\\\"\" %s",
+                    tempFilePath, LM_STUDIO_API_URL);
+    
+            printLog("CURL COMMAND", "Command: ", command);
+    
+            // 3. Execute the curl command
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd", "/c", command);
+            processBuilder.redirectErrorStream(true);
+    
+            Process process = processBuilder.start();
+    
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append('\n');
+            }
+    
+            int exitCode = process.waitFor();
+    
+            printLog("CURL EXECUTION", "Exit Code: " + exitCode, "");
+    
+            // 4. Delete the temporary file
+            Files.deleteIfExists(tempFile);
+    
+            if (exitCode == 0) {
+                String responseBody = output.toString();
                 String logResponseBody = responseBody.length() > 300 ? responseBody.substring(0, 300) + "... [truncated]" : responseBody;
-
-                printLog("RESPONSE RECEIVED", "Status Code: " + statusCode, "Body Length: " + responseBody.length() + " chars");
+    
+                printLog("RESPONSE RECEIVED", "Body Length: " + responseBody.length() + " chars", "");
                 printLog("RESPONSE BODY", "Content: " + logResponseBody, "");
-
-                if (statusCode == 200) {
+    
+                try {
                     JSONObject jsonResponse = new JSONObject(responseBody);
-                    String content = jsonResponse.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
-
-                    printLog("CONTENT PARSED", "Length: " + content.length() + " chars", "Preview: " +
-                        (content.length() > 50 ? content.substring(0, 50) + "..." : content));
+                    JSONArray choices = jsonResponse.getJSONArray("choices");
+                    JSONObject firstChoice = choices.getJSONObject(0);
+                    JSONObject message = firstChoice.getJSONObject("message");
+                    String content = message.getString("content");
+    
                     printLogHeader("LM STUDIO REQUEST", "Request completed successfully");
                     return content;
-                } else {
-                    String errorMessage = "HTTP " + statusCode + ": " + logResponseBody;
-                    printLogError("API ERROR", errorMessage);
-                    printLogHeader("LM STUDIO REQUEST", "Request failed with status " + statusCode);
-                    return "Sorry, I encountered an error when processing your request. Error code: " + statusCode;
+    
+                } catch (Exception e) {
+                    printLogError("JSON PARSING ERROR", "Error parsing JSON response: " + e.getMessage());
+                    printLogError("RESPONSE BODY", "Content: " + responseBody);
+                    printLogHeader("LM STUDIO REQUEST", "Request failed due to JSON parsing exception");
+                    return "Sorry, I encountered an error parsing the response from the server.";
                 }
-            } catch (IOException e) {
-                printLogError("CONNECTION ERROR", "Failed to connect: " + e.getMessage());
-                printLog("TROUBLESHOOTING", "Is LM Studio running?", "Check URL: " + LM_STUDIO_API_URL);
-                printLogHeader("LM STUDIO REQUEST", "Request failed due to connection error");
-                return "Sorry, I couldn't connect to the AI service. Please make sure LM Studio is running on port 1234.";
+    
+            } else {
+                String errorMessage = "CURL ERROR: Exit Code " + exitCode + ", Output: " + output.toString();
+                printLogError("API ERROR", errorMessage);
+                printLogHeader("LM STUDIO REQUEST", "Request failed with exit code " + exitCode);
+                return "Sorry, I encountered an error when processing your request. Error code: " + exitCode;
             }
+    
         } catch (Exception e) {
             printLogError("GENERAL ERROR", "Error with request: " + e.getMessage());
             e.printStackTrace();
