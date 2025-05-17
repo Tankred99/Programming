@@ -5,6 +5,7 @@
 #include <string>
 #include <cwchar>
 #include <stdexcept>  // Для std::invalid_argument и std::out_of_range
+#include <limits> // Added for numeric_limits
 
 class Date {
 private:
@@ -14,9 +15,7 @@ private:
 
     // Минимальная допустимая дата
     static const int MIN_YEAR = 1900;
-    static const int MIN_MONTH = 1;
-    static const int MIN_DAY = 1;
-
+    static const int MAX_YEAR = 9999;
     // Массив дней в месяцах (учитывая не високосный год)
     static const int daysInMonth[];
 
@@ -29,11 +28,17 @@ private:
     // Нормализовать дату (корректировать неправильные значения)
     void normalize();
 
-    // Проверка, что дата больше или равна минимальной допустимой дате
+    // Проверка корректности даты
     bool isValidDate() const;
 
+    bool isValidDateHelper(int d, int m, int y) const;
+
+    long long toDays() const;
+
+    static Date daysToDate(long long days);
+
+
 public:
-    // Конструктор по умолчанию (текущая дата - условно 1.1.2000)
     Date();
 
     // Конструктор с параметрами
@@ -44,7 +49,7 @@ public:
     Date(const std::string& dateStr, const std::string& format = "DD.MM.YYYY");
 
     // Получить строковое представление даты в разных форматах
-    std::string toString(const std::string& format = "DD.MM.YYYY") const;
+    std::string toFormat(const std::string& format = "DD.MM.YYYY") const;
 
     // Получить представление даты в формате широких символов
     std::wstring toWString(const std::string& format = "DD.MM.YYYY") const;
@@ -60,7 +65,8 @@ public:
     void setYear(int y);
 
     // Изменить дату на заданное количество дней
-    Date& addDays(int days); //+=
+    Date& change(int days);
+    Date& addDays(int days); // Added addDays method
 
     // Получить количество дней от 1.1.1900 года до текущей даты
     long long totalDays() const;
@@ -81,6 +87,8 @@ public:
 
     // Перегрузка оператора вывода для широких потоков
     friend std::wostream& operator<<(std::wostream& wos, const Date& date);
+
+    friend std::istream& operator>>(std::istream& is, Date& date);
 };
 
 #endif // DATE_H

@@ -1,0 +1,10 @@
+addDays() ->  change(), в change(int) и потом у даты мы либо вычитаем, либо добавляем дни date.totalDays + int return date.daysToDate
+
+normalize сделать проще, дату -> toDays() -> daysToDate()
+isValidDays должен проверять на корректность даты, если дата вылетает за верхние и нижние границы, должен быть exception
+Минимальная дата 01.01.1900
+Максимальная дата 31.12.9999
+
+Не toString(), а toFormat(String)
+
+Перегрузка ввода
