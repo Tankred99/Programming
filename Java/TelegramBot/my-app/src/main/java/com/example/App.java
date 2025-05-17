@@ -3,7 +3,7 @@ package com.example;
 import java.io.IOException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+//import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -13,11 +13,10 @@ public class App extends TelegramLongPollingBot {
     private static String BOT_TOKEN;
     private static final String BOT_USERNAME = "AI Zed Bot";
     private static final String TOKENS_FILE_PATH = ".env/tokens.txt";
-    private static final String LM_STUDIO_API_URL = "http://127.0.0.1:8080/v1/chat/completions";
+//    private static final String LM_STUDIO_API_URL = "http://127.0.0.1:8080/v1/chat/completions";
 
 
-    public App() {
-    }
+    public App() {}
 
     public static void main(String[] args) {
         try {

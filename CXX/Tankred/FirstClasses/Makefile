@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra
 TARGET = date_tester
-SRCS = main.cpp Date.cpp
+SRCS = main.cpp Date.cpp DateTester.cpp
 HEADERS = Date.h CSVParser.h DateTester.h
 
 # Detect OS for platform-specific commands
