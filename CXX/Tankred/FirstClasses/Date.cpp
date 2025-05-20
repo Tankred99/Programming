@@ -13,7 +13,7 @@ static bool isLeapYear(int y) {
 
 static int getDaysInMonth(int m, int y) {
     if (m < 1 || m > 12) {
-        throw std::invalid_argument("Invalid month value: " + std::to_string(m)); //Improved exception handling
+        throw std::invalid_argument("Invalid month value: " + std::to_string(m)); 
     }
     if (m == 2 && isLeapYear(y)) {
         return 29;
@@ -47,12 +47,14 @@ bool Date::isValidDate() const {
 long long Date::toDays() const {
     std::cout << "toDays called for: " << *this << std::endl;
     if (!isValidDate()) {
-        throw std::invalid_argument("Invalid date in toDays()"); //Improved exception handling
+        throw std::invalid_argument("Invalid date in toDays()"); 
     }
     long long totalDays = 0;
+    long long daysSince1900 = (year - MIN_YEAR) * 365LL;
     for (int y = MIN_YEAR; y < year; ++y) {
-        totalDays += isLeapYear(y) ? 366 : 365;
+        if (isLeapYear(y)) daysSince1900++;
     }
+    totalDays = daysSince1900;
     for (int m = 1; m < month; ++m) {
         totalDays += getDaysInMonth(m, year);
     }
@@ -60,6 +62,7 @@ long long Date::toDays() const {
     std::cout << "toDays returning: " << totalDays << std::endl;
     return totalDays;
 }
+
 
 Date Date::daysToDate(long long days) {
     std::cout << "daysToDate called with days: " << days << std::endl;
@@ -77,11 +80,11 @@ Date Date::daysToDate(long long days) {
 
     try {
         if (!Date::isValidDateHelper(d, m, y)) {
-            throw std::out_of_range("Date out of range in daysToDate"); //Improved exception handling
+            throw std::out_of_range("Date out of range in daysToDate"); 
         }
     } catch (const std::invalid_argument& e) {
         std::cerr << "Exception in daysToDate: " << e.what() << std::endl;
-        throw; // Re-throw the exception
+        throw; 
     }
     std::cout << "daysToDate returning: " << d << "/" << m << "/" << y << std::endl;
     return Date(d, m, y);
@@ -151,7 +154,7 @@ std::string Date::toFormat(const std::string& format) const {
     std::cout << "toFormat called with format: " << format << std::endl;
     std::stringstream ss;
     if (!isValidDate()) {
-        throw std::invalid_argument("Invalid date in toFormat()"); //Improved exception handling
+        throw std::invalid_argument("Invalid date in toFormat()"); 
     }
     if (format == "DD.MM.YYYY") {
         ss << std::setfill('0') << std::setw(2) << day << "."
@@ -180,7 +183,6 @@ void Date::normalize() {
         *this = daysToDate(toDays());
     } catch (const std::exception& e) {
         std::cerr << "Exception in normalize(): " << e.what() << std::endl;
-        // Handle the exception appropriately (e.g., log the error, set the date to a default value).
     }
     std::cout << "normalize returning: " << *this << std::endl;
 }
@@ -195,7 +197,6 @@ Date& Date::change(int days) {
         *this = daysToDate(totalDays);
     } catch (const std::exception& e) {
         std::cerr << "Exception in change(): " << e.what() << std::endl;
-        //Handle the exception (e.g., log it, leave date unchanged)
     }
     std::cout << "change returning: " << *this << std::endl;
     return *this;

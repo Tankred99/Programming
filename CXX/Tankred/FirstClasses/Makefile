@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra
+CXXFLAGS = -std=c++11 -Wall -Wextra -O2
 TARGET = date_tester
 SRCS = main.cpp Date.cpp DateTester.cpp
 HEADERS = Date.h CSVParser.h DateTester.h
