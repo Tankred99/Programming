@@ -1,0 +1,15 @@
+./date_tester date_tests.csv manual
+====== Тестирование класса Date ======
+Date constructor called with: 15/5/2023
+isValidDate called for: toFormat called with format: DD.MM.YYYY
+toFormat returning: 15.05.2023
+15.05.2023
+normalize called for: toFormat called with format: DD.MM.YYYY
+toFormat returning: 15.05.2023
+15.05.2023
+toDays called for: toFormat called with format: DD.MM.YYYY
+toFormat returning: 15.05.2023
+15.05.2023
+toDays returning: 45059
+daysToDate called with days: 45059
+daysToDate returning: 15/5/2023

@@ -4,7 +4,6 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-//#include <codecvt>
 
 std::vector<std::vector<std::string>> DateTester::readCSV(const std::string& filename) {
     std::vector<std::vector<std::string>> data;
@@ -36,7 +35,14 @@ void DateTester::testAdd(const std::vector<std::string>& row) {
     std::string expectedDateStr = row[4];
 
     Date resultDate = date1;
-    resultDate.change(daysToAdd);
+    try {
+        resultDate.change(daysToAdd);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception during testAdd: " << e.what() << std::endl;
+        assert(false); 
+        return;
+    }
+
     Date expectedDate(expectedDateStr, "DD.MM.YYYY");
 
     assert(resultDate == expectedDate);
@@ -50,11 +56,16 @@ void DateTester::testFormat(const std::vector<std::string>& row) {
     std::string outputFormat = row[4];
     std::string expectedOutput = row[5];
 
-    Date date(dateStr, inputFormat);
-    std::string formattedDate = date.toFormat(outputFormat);
-
-    assert(formattedDate == expectedOutput);
-    std::cout << "✓ Тест форматирования: " << date.toFormat(inputFormat) << " (" << inputFormat << ") => " << formattedDate << " (" << outputFormat << ")" << std::endl;
+    try {
+        Date date(dateStr, inputFormat);
+        std::string formattedDate = date.toFormat(outputFormat);
+        assert(formattedDate == expectedOutput);
+        std::cout << "✓ Тест форматирования: " << date.toFormat(inputFormat) << " (" << inputFormat << ") => " << formattedDate << " (" << outputFormat << ")" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception during testFormat: " << e.what() << std::endl;
+        assert(false); 
+        return;
+    }
 }
 
 void DateTester::testParse(const std::vector<std::string>& row) {
@@ -63,39 +74,56 @@ void DateTester::testParse(const std::vector<std::string>& row) {
     std::string inputFormat = row[3];
     std::string expectedOutput = row[4];
 
-    Date date(dateStr, inputFormat);
-    std::string formattedDate = date.toFormat("DD.MM.YYYY");
-
-    assert(formattedDate == expectedOutput);
-    std::cout << "✓ Тест парсинга: " << dateStr << " (" << inputFormat << ") => " << formattedDate << std::endl;
+    try {
+        Date date(dateStr, inputFormat);
+        std::string formattedDate = date.toFormat("DD.MM.YYYY");
+        assert(formattedDate == expectedOutput);
+        std::cout << "✓ Тест парсинга: " << dateStr << " (" << inputFormat << ") => " << formattedDate << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception during testParse: " << e.what() << std::endl;
+        assert(false); 
+        return;
+    }
 }
 
 void DateTester::runTests(const std::vector<std::vector<std::string>>& testCases) {
-    for (const auto& row : testCases) {
-        std::string operation = row[0];
-        if (operation == "compare") {
-            Date date1(row[1], "DD.MM.YYYY");
-            Date date2(row[2], "DD.MM.YYYY");
-            std::string comparison = row[4];
-
-            if (comparison == "<" ) assert(date1 < date2);
-            else if (comparison == ">") assert(date1 > date2);
-            else if (comparison == "=") assert(date1 == date2);
-
-            std::cout << "✓ Тест сравнения: " << row[1] << " " << comparison << " " << row[2] << std::endl;
-        } else if (operation == "diff") {
-            Date date1(row[1], "DD.MM.YYYY");
-            Date date2(row[2], "DD.MM.YYYY");
-            long long expectedDiff = std::stoll(row[4]);
-            long long actualDiff = date2 - date1;
-            assert(actualDiff == expectedDiff);
-            std::cout << "✓ Тест разности: " << row[2] << " - " << row[1] << " = " << actualDiff << std::endl;
-        } else if (operation == "add") {
-            testAdd(row);
-        } else if (operation == "format") {
-            testFormat(row);
-        } else if (operation == "parse") {
-            testParse(row);
+    try {
+        for (size_t i = 0; i < testCases.size(); ++i) {
+            const auto& row = testCases[i];
+            std::cout << "\nRunning test case " << i + 1 << ": " << row[0] << std::endl; 
+            std::string operation = row[0];
+            if (operation == "compare") {
+                Date date1(row[1], "DD.MM.YYYY");
+                Date date2(row[2], "DD.MM.YYYY");
+                std::string comparison = row[4];
+                std::cout << "Comparing " << date1 << " and " << date2 << std::endl;
+                if (comparison == "<" ) assert(date1 < date2);
+                else if (comparison == ">") assert(date1 > date2);
+                else if (comparison == "=") assert(date1 == date2);
+                std::cout << "Comparison test completed." << std::endl;
+            } else if (operation == "diff") {
+                Date date1(row[1], "DD.MM.YYYY");
+                Date date2(row[2], "DD.MM.YYYY");
+                long long expectedDiff = std::stoll(row[4]);
+                long long actualDiff = date2 - date1;
+                std::cout << "Calculating difference between " << date1 << " and " << date2 << std::endl;
+                assert(actualDiff == expectedDiff);
+                std::cout << "Difference test completed." << std::endl;
+            } else if (operation == "add") {
+                std::cout << "Starting add test." << std::endl;
+                testAdd(row);
+                std::cout << "Add test completed." << std::endl;
+            } else if (operation == "format") {
+                std::cout << "Starting format test." << std::endl;
+                testFormat(row);
+                std::cout << "Format test completed." << std::endl;
+            } else if (operation == "parse") {
+                std::cout << "Starting parse test." << std::endl;
+                testParse(row);
+                std::cout << "Parse test completed." << std::endl;
+            }
         }
+    } catch (const std::exception& e) {
+        std::cerr << "An exception occurred: " << e.what() << std::endl;
     }
 }

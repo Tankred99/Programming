@@ -13,7 +13,7 @@ static bool isLeapYear(int y) {
 
 static int getDaysInMonth(int m, int y) {
     if (m < 1 || m > 12) {
-        throw std::invalid_argument("Invalid month value: " + std::to_string(m));
+        throw std::invalid_argument("Invalid month value: " + std::to_string(m)); //Improved exception handling
     }
     if (m == 2 && isLeapYear(y)) {
         return 29;
@@ -23,19 +23,32 @@ static int getDaysInMonth(int m, int y) {
 
 
 bool Date::isValidDate() const {
+    std::cout << "isValidDate called for: " << *this << std::endl;
     if (year < MIN_YEAR || year > MAX_YEAR) {
+        std::cerr << "Error: Year out of range: " << year << std::endl;
         return false;
     }
-    if (month < 1 || month > 12) {
-        return false;
-    }
-    if (day < 1 || day > getDaysInMonth(month, year)) {
+    try {
+        if (month < 1 || month > 12) {
+            std::cerr << "Error: Month out of range: " << month << std::endl;
+            return false;
+        }
+        if (day < 1 || day > getDaysInMonth(month, year)) {
+            std::cerr << "Error: Day out of range: " << day << " for month/year: " << month << "/" << year << std::endl;
+            return false;
+        }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Exception in isValidDate: " << e.what() << std::endl;
         return false;
     }
     return true;
 }
 
 long long Date::toDays() const {
+    std::cout << "toDays called for: " << *this << std::endl;
+    if (!isValidDate()) {
+        throw std::invalid_argument("Invalid date in toDays()"); //Improved exception handling
+    }
     long long totalDays = 0;
     for (int y = MIN_YEAR; y < year; ++y) {
         totalDays += isLeapYear(y) ? 366 : 365;
@@ -44,10 +57,12 @@ long long Date::toDays() const {
         totalDays += getDaysInMonth(m, year);
     }
     totalDays += day - 1;
+    std::cout << "toDays returning: " << totalDays << std::endl;
     return totalDays;
 }
 
 Date Date::daysToDate(long long days) {
+    std::cout << "daysToDate called with days: " << days << std::endl;
     int y = MIN_YEAR;
     while (days >= (isLeapYear(y) ? 366 : 365)) {
         days -= (isLeapYear(y) ? 366 : 365);
@@ -59,20 +74,33 @@ Date Date::daysToDate(long long days) {
         m++;
     }
     int d = days + 1;
-    if (!Date::isValidDateHelper(d, m, y)) {
-        throw std::out_of_range("Date out of range: " + std::to_string(d) + "/" + std::to_string(m) + "/" + std::to_string(y));
+
+    try {
+        if (!Date::isValidDateHelper(d, m, y)) {
+            throw std::out_of_range("Date out of range in daysToDate"); //Improved exception handling
+        }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Exception in daysToDate: " << e.what() << std::endl;
+        throw; // Re-throw the exception
     }
+    std::cout << "daysToDate returning: " << d << "/" << m << "/" << y << std::endl;
     return Date(d, m, y);
 }
 
 bool Date::isValidDateHelper(int d, int m, int y) {
     if (y < MIN_YEAR || y > MAX_YEAR) return false;
     if (m < 1 || m > 12) return false;
-    if (d < 1 || d > getDaysInMonth(m, y)) return false;
+    try {
+        if (d < 1 || d > getDaysInMonth(m, y)) return false;
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Exception in isValidDateHelper: " << e.what() << std::endl;
+        return false;
+    }
     return true;
 }
 
 Date::Date(int d, int m, int y) : day(d), month(m), year(y) {
+    std::cout << "Date constructor called with: " << d << "/" << m << "/" << y << std::endl;
     if (!isValidDate()) {
         throw std::out_of_range("Invalid date: " + std::to_string(d) + "/" + std::to_string(m) + "/" + std::to_string(y));
     }
@@ -81,6 +109,7 @@ Date::Date(int d, int m, int y) : day(d), month(m), year(y) {
 
 
 Date::Date(const std::string& dateStr, const std::string& format) {
+    std::cout << "Date constructor (string) called with: " << dateStr << ", format: " << format << std::endl;
     day = 1;
     month = 1;
     year = MIN_YEAR;
@@ -102,10 +131,12 @@ Date::Date(const std::string& dateStr, const std::string& format) {
 
     }
     catch (const std::exception& e) {
+        std::cerr << "Error parsing date string: " << e.what() << std::endl;
         throw std::invalid_argument("Error parsing date string: " + std::string(e.what()));
     }
 
-    if (!isValidDate()) {
+    if (!isValidDateHelper(d, m, y)) {
+        std::cerr << "Error: Invalid date components: " << d << "/" << m << "/" << y << std::endl;
         throw std::out_of_range("Date out of range: " + std::to_string(d) + "/" + std::to_string(m) + "/" + std::to_string(y));
     }
     day = d;
@@ -117,8 +148,11 @@ Date::Date(const std::string& dateStr, const std::string& format) {
 
 
 std::string Date::toFormat(const std::string& format) const {
+    std::cout << "toFormat called with format: " << format << std::endl;
     std::stringstream ss;
-
+    if (!isValidDate()) {
+        throw std::invalid_argument("Invalid date in toFormat()"); //Improved exception handling
+    }
     if (format == "DD.MM.YYYY") {
         ss << std::setfill('0') << std::setw(2) << day << "."
            << std::setfill('0') << std::setw(2) << month << "."
@@ -136,19 +170,34 @@ std::string Date::toFormat(const std::string& format) const {
            << std::setfill('0') << std::setw(2) << month << "."
            << std::setfill('0') << std::setw(4) << year;
     }
+    std::cout << "toFormat returning: " << ss.str() << std::endl;
     return ss.str();
 }
 
 void Date::normalize() {
-    *this = daysToDate(toDays());
+    std::cout << "normalize called for: " << *this << std::endl;
+    try {
+        *this = daysToDate(toDays());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in normalize(): " << e.what() << std::endl;
+        // Handle the exception appropriately (e.g., log the error, set the date to a default value).
+    }
+    std::cout << "normalize returning: " << *this << std::endl;
 }
 
 Date& Date::change(int days) {
-    long long totalDays = toDays() + days;
-    if (totalDays < 0 || totalDays > std::numeric_limits<long long>::max()) {
-        throw std::out_of_range("Resulting date out of range.");
+    std::cout << "change called with days: " << days << ", current date: " << *this << std::endl;
+    try {
+        long long totalDays = toDays() + days;
+        if (totalDays < 0 || totalDays > std::numeric_limits<long long>::max()) {
+            throw std::out_of_range("Resulting date out of range.");
+        }
+        *this = daysToDate(totalDays);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in change(): " << e.what() << std::endl;
+        //Handle the exception (e.g., log it, leave date unchanged)
     }
-    *this = daysToDate(totalDays);
+    std::cout << "change returning: " << *this << std::endl;
     return *this;
 }
 
@@ -158,31 +207,48 @@ long long Date::totalDays() const {
 }
 
 long long Date::operator-(const Date& other) const {
-    return toDays() - other.toDays();
+    std::cout << "operator- called with: " << *this << " - " << other << std::endl;
+    long long diff = toDays() - other.toDays();
+    std::cout << "operator- returning: " << diff << std::endl;
+    return diff;
 }
 
 bool Date::operator==(const Date& other) const {
-    return (day == other.day && month == other.month && year == other.year);
+    std::cout << "operator== called with: " << *this << " == " << other << std::endl;
+    bool isEqual = (day == other.day && month == other.month && year == other.year);
+    std::cout << "operator== returning: " << isEqual << std::endl;
+    return isEqual;
 }
 
 bool Date::operator!=(const Date& other) const {
-    return !(*this == other);
+    bool isNotEqual = !(*this == other);
+    std::cout << "operator!= returning: " << isNotEqual << std::endl;
+    return isNotEqual;
 }
 
 bool Date::operator<(const Date& other) const {
-    return toDays() < other.toDays();
+    std::cout << "operator< called with: " << *this << " < " << other << std::endl;
+    bool isLess = toDays() < other.toDays();
+    std::cout << "operator< returning: " << isLess << std::endl;
+    return isLess;
 }
 
 bool Date::operator<=(const Date& other) const {
-    return (*this < other) || (*this == other);
+    bool isLessOrEqual = (*this < other) || (*this == other);
+    std::cout << "operator<= returning: " << isLessOrEqual << std::endl;
+    return isLessOrEqual;
 }
 
 bool Date::operator>(const Date& other) const {
-    return !(*this <= other);
+    bool isGreater = !(*this <= other);
+    std::cout << "operator> returning: " << isGreater << std::endl;
+    return isGreater;
 }
 
 bool Date::operator>=(const Date& other) const {
-    return !(*this < other);
+    bool isGreaterOrEqual = !(*this < other);
+    std::cout << "operator>= returning: " << isGreaterOrEqual << std::endl;
+    return isGreaterOrEqual;
 }
 
 

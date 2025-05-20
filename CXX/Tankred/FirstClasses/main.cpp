@@ -37,6 +37,7 @@ void runManualTests() {
     std::cout << "Ручной тест: Вычитание 10 дней к 25.05.2023: " << d1.toFormat() << std::endl;
 }
 
+
 int main(int argc, char* argv[]) {
     try {
 #ifdef _WIN32
